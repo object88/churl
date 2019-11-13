@@ -76,6 +76,7 @@ if [[ $DO_TEST == "true" ]]; then
   if ! [ -x $CWD/bin/mockgen ]; then
     echo "Building mockgen"
     time go build -o $CWD/bin/mockgen $CWD/vendor/github.com/golang/mock/mockgen
+    echo ""
   fi
   echo "mockgen tool checked"
 
@@ -84,12 +85,14 @@ if [[ $DO_TEST == "true" ]]; then
 
   echo "Generating mock for RoundTripper"
   time $CWD/bin/mockgen -destination=$CWD/mocks/mock_httproundtripper.go -package=mocks net/http RoundTripper
+  echo ""
 fi
 
 if [[ $DO_VERIFY == "true" ]]; then
-    echo "Verifying modules"
-    # returns non-zero if this doesn't verify out
-    time go mod verify
+  echo "Verifying modules"
+  # returns non-zero if this doesn't verify out
+  time go mod verify
+  echo ""
 fi
 
 if [[ $DO_VET == "true" ]]; then
@@ -102,13 +105,9 @@ if [[ $DO_VET == "true" ]]; then
   # By default, all checks are performed.
   #
   # https://golang.org/cmd/vet/
-  echo "Running the vet"
+  echo "Running vet"
   time go vet $(go list ./...)
-fi
-
-# test executables and binaries
-if [[ $DO_TEST == "true" ]]; then
-  time go test ./... -count=1
+  echo ""
 fi
 
 # build executable(s)
@@ -125,6 +124,9 @@ for PLATFORM in "${PLATFORMS[@]}"; do
   GOOS=$(cut -d'/' -f1 <<< $PLATFORM)
   GOARCH=$(cut -d'/' -f2 <<< $PLATFORM)
   BINARY_NAME="churl-${GOOS}-${GOARCH}"
+  if [ $DEFAULT_GOOS == $GOOS ]; then
+    export TEST_BINARY_NAME="$CWD/bin/$BINARY_NAME"
+  fi
   echo "building as $BINARY_NAME"
 
   if [ $(uname) == "Darwin" ]; then
@@ -133,4 +135,12 @@ for PLATFORM in "${PLATFORMS[@]}"; do
   else
     time env GOOS=$GOOS GOARCH=$GOARCH go build -o ./bin/$BINARY_NAME -tags "netgo" -ldflags "-s -w -extldflags \"-static\" -X github.com/object88/churl/churl.ChurlVersion=$VERSION" ./main/main.go
   fi
+  echo ""
 done
+
+# test executables and binaries
+if [[ $DO_TEST == "true" ]]; then
+  echo "Testing with $TEST_BINARY_NAME"
+  time go test ./... -count=1
+  echo ""
+fi

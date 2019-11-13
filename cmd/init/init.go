@@ -5,10 +5,12 @@ import (
 	"path"
 
 	"github.com/object88/churl/cmd/common"
+	"github.com/object88/churl/cmd/flags"
 	"github.com/object88/churl/cmd/traverse"
 	"github.com/object88/churl/manifest"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type command struct {
@@ -30,25 +32,30 @@ func CreateCommand(ca *common.CommonArgs) *cobra.Command {
 		CommonArgs: ca,
 	}
 
+	flgs := c.Flags()
+
+	flags.CreateConfigFlag(flgs)
+
 	return traverse.TraverseRunHooks(&c.Command)
 }
 
 func (c *command) Execute(cmd *cobra.Command, args []string) error {
-	d, err := os.UserConfigDir()
-	if err != nil {
-		return errors.Wrapf(err, "cannot initialize churl")
-	}
-	configDir := path.Join(d, "churl")
-	err = os.MkdirAll(configDir, 0755)
+	configFile := viper.GetString(flags.ConfigKey)
+	configDir := path.Base(configFile)
+	err := os.MkdirAll(configDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "cannot create config directory '%s'", configDir)
 	}
-	configFile := path.Join(configDir, "config.json")
+
 	m, err := manifest.Init(configFile)
 	if err != nil {
 		return errors.Wrapf(err, "failed to initialize churl manifest file at '%s'", configFile)
 	}
-	defer m.Save()
+	err = m.Save()
+	if err != nil {
+		return errors.Wrapf(err, "failed to save manifest file at '%s'", configFile)
+	}
+
 	defer m.Close()
 
 	c.Logger.Infof("Created config file at '%s'", configFile)

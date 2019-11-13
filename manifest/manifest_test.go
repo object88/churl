@@ -108,8 +108,6 @@ func Test_Manifest_Save(t *testing.T) {
 	if result == nil {
 		t.Errorf("Did not find JSON element with query '%s'", query)
 	}
-
-	t.Errorf("NOTOK")
 }
 
 func Test_Manifest_Close(t *testing.T) {

@@ -7,15 +7,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type command struct {
+	cobra.Command
+	*common.CommonArgs
+}
+
 func CreateCommand(ca *common.CommonArgs) *cobra.Command {
-	c := &cobra.Command{
-		Use:   "config",
-		Short: "config subcommands will handle churl configuration",
+	var c *command
+	c = &command{
+		Command: cobra.Command{
+			Use:   "config",
+			Short: "config subcommands will handle churl configuration",
+		},
+		CommonArgs: ca,
 	}
 
 	c.AddCommand(
 		current.CreateCommand(ca),
 	)
 
-	return traverse.TraverseRunHooks(c)
+	return traverse.TraverseRunHooks(&c.Command)
 }
