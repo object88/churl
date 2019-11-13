@@ -1,24 +1,194 @@
 package manifest
 
-import "io"
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"os"
+	"sort"
 
-// ChartMuseum describes the destination chart museum
-type ChartMuseum struct {
-	KubeContext string
-	ServiceName string
-	Port        uint64
-}
+	"github.com/pkg/errors"
+)
+
+const (
+	museumsKey string = "museums"
+)
 
 // Manifest describes the configuration for the churl tool
 type Manifest struct {
-	Museums ChartMuseum
+	Museums map[string]*ChartMuseum
+
+	f *os.File
+}
+
+// Init creates a new manifest instance and creates a new file at `target`.  If
+// `target` already exists, func fails.  File is created but has no contents
+// until Save is called.
+func Init(target string) (*Manifest, error) {
+	m := New()
+
+	f, err := os.OpenFile(target, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to open manifest file '%s'", target)
+	}
+
+	m.f = f
+
+	return m, nil
+}
+
+// New creates a new manifest instance
+func New() *Manifest {
+	return &Manifest{
+		Museums: map[string]*ChartMuseum{},
+	}
 }
 
 func Open(r io.Reader) (*Manifest, error) {
-	return nil, nil
+	m := &Manifest{}
+
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(m); err != nil {
+		return nil, errors.Wrapf(err, "Failed to decode the manifest")
+	}
+
+	return m, nil
 }
 
 func OpenFromFile(manifestFilepath string) (*Manifest, error) {
+	f, err := os.Open(manifestFilepath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to open manifest file '%s'", manifestFilepath)
+	}
 
-	return Open(nil)
+	m, err := Open(f)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to open manifest from file '%s'", manifestFilepath)
+	}
+
+	m.f = f
+
+	return m, nil
+}
+
+// Save write the manifest file to disk, if it was opened with `OpenFromFile`
+// or created with `Init`
+func (m *Manifest) Save() error {
+	if m == nil {
+		return errors.Errorf("manifest pointer reciever is nil; cannot save")
+	}
+	if m.f == nil {
+		return errors.Errorf("no file is open, cannot save")
+	}
+
+	_, err := m.f.Seek(0, 0)
+	if err != nil {
+		return errors.Wrapf(err, "internal error: failed to keep to beginning of file")
+	}
+
+	n, err := m.WriteTo(m.f)
+	if err != nil {
+		return errors.Wrapf(err, "failed to save manifest")
+	}
+
+	err = m.f.Truncate(n)
+	if err != nil {
+		return errors.Wrapf(err, "internal error: failed to truncate manifest to %d bytes", n)
+	}
+
+	return nil
+}
+
+// Close satisfies the io.Closer interface
+func (m *Manifest) Close() error {
+	if m.f != nil {
+		defer func() {
+			m.f = nil
+		}()
+
+		err := m.f.Close()
+		if err != nil {
+			return errors.Wrapf(err, "failed to close manifest file")
+		}
+	}
+
+	return nil
+}
+
+// MarshalJSON satisfies the encoding/json.Marshaler interface
+func (m *Manifest) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteString(`{"`)
+	buf.WriteString(museumsKey)
+	buf.WriteString(`":[`)
+
+	names := make([]string, len(m.Museums))
+	offset := 0
+	for key := range m.Museums {
+		names[offset] = key
+		offset++
+	}
+	sort.Strings(names)
+
+	enc := json.NewEncoder(&buf)
+	enc.SetIndent("", "  ")
+
+	for k, v := range names {
+		if k != 0 {
+			buf.WriteRune(',')
+		}
+		err := enc.Encode(intermediateMuseum{
+			name:        v,
+			ChartMuseum: m.Museums[v],
+		})
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to encode intermediateMuseum")
+		}
+	}
+
+	buf.WriteString(`]}`)
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalJSON satisfies the encoding/json.Unmarshaler interface
+func (m *Manifest) UnmarshalJSON(b []byte) error {
+	var objMap map[string]*json.RawMessage
+	err := json.Unmarshal(b, &objMap)
+	if err != nil {
+		return errors.Wrapf(err, "failed to unmarshal top-level manifest")
+	}
+
+	m.Museums = map[string]*ChartMuseum{}
+
+	r, ok := objMap[museumsKey]
+	if !ok {
+		return errors.Wrapf(err, "Must have '%s' key", museumsKey)
+	}
+
+	var data []*intermediateMuseum
+	err = json.Unmarshal(*r, &data)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to unmarshal '%s' value into array of *intermediateMuseum", museumsKey)
+	}
+
+	for _, v := range data {
+		m.Museums[v.name] = v.ChartMuseum
+	}
+
+	return nil
+}
+
+// WriteTo satisfies the io.WriterTo interface
+func (m *Manifest) WriteTo(w io.Writer) (int64, error) {
+	wc := writeCounter{
+		w: w,
+	}
+	enc := json.NewEncoder(&wc)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(m); err != nil {
+		return int64(wc.count), errors.Wrapf(err, "Failed to encode the manifest")
+	}
+	return int64(wc.count), nil
 }

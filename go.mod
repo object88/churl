@@ -4,6 +4,8 @@ go 1.12
 
 require (
 	github.com/golang/mock v1.3.1
+	github.com/google/uuid v1.1.1
+	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 	github.com/pkg/errors v0.8.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
