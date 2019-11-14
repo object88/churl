@@ -9,6 +9,7 @@ import (
 	"github.com/object88/churl/cmd/get"
 	initcmd "github.com/object88/churl/cmd/init"
 	"github.com/object88/churl/cmd/traverse"
+	"github.com/object88/churl/cmd/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -21,7 +22,7 @@ func InitializeCommands() *cobra.Command {
 		config.CreateCommand(ca),
 		get.CreateCommand(ca),
 		initcmd.CreateCommand(ca),
-		createVersionCommand(),
+		version.CreateCommand(),
 	)
 
 	return rootCmd

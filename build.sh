@@ -5,6 +5,7 @@ cd $(dirname "$0")
 CWD=$(pwd)
 
 # Use this to ensure that we have all the tools required to do a build.
+export CGO_ENABLED=0
 export GO111MODULE=on
 export GOFLAGS="-mod=vendor"
 
@@ -22,6 +23,7 @@ check() {
 }
 
 check jq
+check git
 check go
 
 if ! [ ${#MISSING[@]} -eq 0 ]; then
@@ -35,8 +37,16 @@ fi
 
 echo "Prerequisites present"
 
-VERSION=$(cat .shipyard/manifest.json | jq -r '.version')
-echo "Build version '$VERSION'"
+GIT_COMMIT=$(git rev-list -1 HEAD)
+VERSION=$(git describe --tags)
+if ! [ -z "$(git status --porcelain)" ]; then
+  # There are untracked or unstaged changes
+  GIT_COMMIT="DIRTY-${GIT_COMMIT}"
+  VERSION="WIP-${VERSION}"
+fi
+
+echo "Build version '$VERSION', git SHA '$GIT_COMMIT'"
+LDFLAGS_IMPORTS="-X github.com/object88/churl.GitCommit=${GIT_COMMIT} -X github.com/object88/churl.ChurlVersion=${VERSION}"
 
 cd "$CWD"
 
@@ -121,8 +131,8 @@ fi
 
 # build executable for each platform...
 for PLATFORM in "${PLATFORMS[@]}"; do
-  GOOS=$(cut -d'/' -f1 <<< $PLATFORM)
-  GOARCH=$(cut -d'/' -f2 <<< $PLATFORM)
+  export GOOS=$(cut -d'/' -f1 <<< $PLATFORM)
+  export GOARCH=$(cut -d'/' -f2 <<< $PLATFORM)
   BINARY_NAME="churl-${GOOS}-${GOARCH}"
   if [ $DEFAULT_GOOS == $GOOS ]; then
     export TEST_BINARY_NAME="$CWD/bin/$BINARY_NAME"
@@ -131,9 +141,9 @@ for PLATFORM in "${PLATFORMS[@]}"; do
 
   if [ $(uname) == "Darwin" ]; then
     # Cannot do a static compilation on Darwin.
-    time env GOOS=$GOOS GOARCH=$GOARCH go build -o ./bin/$BINARY_NAME -ldflags "-s -w -X github.com/object88/churl/churl.ChurlVersion=$VERSION" ./main/main.go
+    time go build -o ./bin/$BINARY_NAME -ldflags "-s -w $LDFLAGS_IMPORTS" ./main/main.go
   else
-    time env GOOS=$GOOS GOARCH=$GOARCH go build -o ./bin/$BINARY_NAME -tags "netgo" -ldflags "-s -w -extldflags \"-static\" -X github.com/object88/churl/churl.ChurlVersion=$VERSION" ./main/main.go
+    time go build -o ./bin/$BINARY_NAME -tags "netgo" -ldflags "-extldflags \"-static\" -s -w $LDFLAGS_IMPORTS" ./main/main.go
   fi
   echo ""
 done
