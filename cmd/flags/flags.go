@@ -10,6 +10,7 @@ import (
 
 const (
 	ConfigKey  string = "config"
+	OutputKey         = "output"
 	VerboseKey        = "verbose"
 )
 

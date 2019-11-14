@@ -150,6 +150,9 @@ done
 
 # test executables and binaries
 if [[ $DO_TEST == "true" ]]; then
+  export TEST_SHA=${GIT_COMMIT}
+  export TEST_VERSION=${VERSION}
+
   echo "Testing with $TEST_BINARY_NAME"
   time go test ./... -count=1
   echo ""

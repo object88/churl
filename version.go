@@ -2,6 +2,8 @@ package churl
 
 import "strings"
 
+import "encoding/json"
+
 // ChurlVersion contains the version
 var ChurlVersion = "unset"
 
@@ -29,4 +31,15 @@ func (v Version) String() string {
 	sb.WriteString(v.Git())
 	sb.WriteRune('\n')
 	return sb.String()
+}
+
+func (v Version) MarshalJSON() ([]byte, error) {
+	x := struct {
+		Version string `json:"version"`
+		SHA     string `json:"sha"`
+	}{
+		Version: ChurlVersion,
+		SHA:     GitCommit,
+	}
+	return json.Marshal(x)
 }
