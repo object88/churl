@@ -154,6 +154,6 @@ if [[ $DO_TEST == "true" ]]; then
   export TEST_VERSION=${VERSION}
 
   echo "Testing with $TEST_BINARY_NAME"
-  time go test ./... -count=1
+  time go test ./... -count=1 -cover
   echo ""
 fi

@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Run(t *testing.T, args ...string) string {
+func Run(t *testing.T, args ...string) (string, int) {
 	bin := os.Getenv("TEST_BINARY_NAME")
 	if bin == "" {
 		t.Skipf("Environment variable '$TEST_BINARY_NAME' not provided, skipping.")
@@ -58,7 +58,9 @@ func Run(t *testing.T, args ...string) string {
 			return
 		}
 		err = cmd.Wait()
-		if err != nil {
+		if _, ok := err.(*exec.ExitError); err != nil && !ok {
+			// We have an err, and it's not an ExitError (trapping a non-zero exit
+			// code).
 			ch <- errors.Wrapf(err, "Failed to wait")
 			return
 		}
@@ -76,5 +78,5 @@ func Run(t *testing.T, args ...string) string {
 		t.Errorf("Command timed out")
 	}
 
-	return out.String()
+	return out.String(), cmd.ProcessState.ExitCode()
 }

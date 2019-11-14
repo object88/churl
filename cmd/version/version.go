@@ -6,14 +6,16 @@ import (
 
 	"github.com/object88/churl"
 	"github.com/object88/churl/cmd/flags"
+	"github.com/object88/churl/cmd/internal"
 	"github.com/object88/churl/cmd/traverse"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 type command struct {
 	cobra.Command
+
+	output internal.Output
 }
 
 // CreateCommand returns the version command
@@ -24,37 +26,52 @@ func CreateCommand() *cobra.Command {
 			Use:   "version",
 			Short: "report the version of the tool",
 			Args:  cobra.NoArgs,
+			PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+				return c.Preexecute(cmd, args)
+			},
 			RunE: func(cmd *cobra.Command, args []string) error {
-				var v churl.Version
-
-				switch viper.GetString(flags.OutputKey) {
-				case "text":
-					os.Stdout.WriteString(v.String())
-				case "json":
-					enc := json.NewEncoder(os.Stdout)
-					enc.SetIndent("", "  ")
-					err := enc.Encode(v)
-					if err != nil {
-						return errors.Wrapf(err, "internal error: failed to encode version")
-					}
-				case "json-compact":
-					enc := json.NewEncoder(os.Stdout)
-					err := enc.Encode(v)
-					if err != nil {
-						return errors.Wrapf(err, "internal error: failed to encode version")
-					}
-				}
-
-				return nil
+				return c.Execute(cmd, args)
 			},
 		},
 	}
 
 	flgs := c.Flags()
 
-	flgs.String(flags.OutputKey, "text", "Output format ")
-	viper.BindPFlag(flags.OutputKey, flgs.Lookup(flags.OutputKey))
-	viper.BindEnv(flags.OutputKey)
+	flags.CreateOutputFlag(flgs)
 
 	return traverse.TraverseRunHooks(&c.Command)
+}
+
+func (c *command) Preexecute(cmd *cobra.Command, args []string) error {
+	var err error
+	c.output, err = flags.ReadOutputFlag()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *command) Execute(cmd *cobra.Command, args []string) error {
+	var v churl.Version
+
+	switch c.output {
+	case internal.Text:
+		os.Stdout.WriteString(v.String())
+	case internal.JSON:
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		err := enc.Encode(v)
+		if err != nil {
+			return errors.Wrapf(err, "internal error: failed to encode version")
+		}
+	case internal.JSONCompact:
+		enc := json.NewEncoder(os.Stdout)
+		err := enc.Encode(v)
+		if err != nil {
+			return errors.Wrapf(err, "internal error: failed to encode version")
+		}
+	}
+
+	return nil
 }
