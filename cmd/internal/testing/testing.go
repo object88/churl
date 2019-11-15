@@ -1,32 +1,19 @@
-package init
+package testing
 
 import (
 	"bufio"
+	"bytes"
 	"context"
-	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jmespath/go-jmespath"
 	"github.com/pkg/errors"
 )
 
-func Test_Cmd_Init(t *testing.T) {
-	chartdir, _ := ioutil.TempDir("", uuid.New().String())
-	chartfile := path.Join(chartdir, "manifest.json")
-
-	run(t, "init", "--config", chartfile)
-
-	validateManifest(t, chartfile)
-}
-
-func run(t *testing.T, args ...string) {
+func Run(t *testing.T, args ...string) (string, int) {
 	bin := os.Getenv("TEST_BINARY_NAME")
 	if bin == "" {
 		t.Skipf("Environment variable '$TEST_BINARY_NAME' not provided, skipping.")
@@ -44,8 +31,15 @@ func run(t *testing.T, args ...string) {
 	}
 	cmd := exec.CommandContext(context.Background(), binaryPath, args...)
 
+	// Set up a chain of pipes.  Out is a buffer to return STDOUT.
+	// The command's STDERR will only go to the bufio scanner for dumping to the
+	// test log.  The command's STDOUT will be duplicated to write both to the
+	// test log and to an in-memory buffer, to be returned as a string.
+	var out bytes.Buffer
 	pout, pin := io.Pipe()
-	cmd.Stdout = pin
+	min := io.MultiWriter(pin, &out)
+
+	cmd.Stdout = min
 	cmd.Stderr = pin
 
 	go func() {
@@ -64,7 +58,9 @@ func run(t *testing.T, args ...string) {
 			return
 		}
 		err = cmd.Wait()
-		if err != nil {
+		if _, ok := err.(*exec.ExitError); err != nil && !ok {
+			// We have an err, and it's not an ExitError (trapping a non-zero exit
+			// code).
 			ch <- errors.Wrapf(err, "Failed to wait")
 			return
 		}
@@ -81,31 +77,6 @@ func run(t *testing.T, args ...string) {
 	case <-ctx.Done():
 		t.Errorf("Command timed out")
 	}
-}
 
-func validateManifest(t *testing.T, chartfile string) {
-	f, err := os.Open(chartfile)
-	if err != nil {
-		t.Fatalf("Failed to read manifest file:\n%s", err.Error())
-	}
-	defer f.Close()
-
-	query := "museums"
-	jmes, err := jmespath.Compile(query)
-	if err != nil {
-		t.Fatalf("Failed to compile query '%s':\n%s", query, err.Error())
-	}
-
-	var data interface{}
-	dec := json.NewDecoder(f)
-	dec.Decode(&data)
-
-	result, err := jmes.Search(data)
-	if err != nil {
-		t.Fatalf("Failed to execute jmes query with query '%s':\n%s", query, err.Error())
-	}
-
-	if result == nil {
-		t.Errorf("Did not find JSON element with query '%s'", query)
-	}
+	return out.String(), cmd.ProcessState.ExitCode()
 }
