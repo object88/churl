@@ -6,7 +6,6 @@ import (
 
 	"github.com/object88/churl"
 	"github.com/object88/churl/cmd/flags"
-	"github.com/object88/churl/cmd/internal"
 	"github.com/object88/churl/cmd/traverse"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -15,7 +14,7 @@ import (
 type command struct {
 	cobra.Command
 
-	output internal.Output
+	output flags.Output
 }
 
 // CreateCommand returns the version command
@@ -56,16 +55,16 @@ func (c *command) Execute(cmd *cobra.Command, args []string) error {
 	var v churl.Version
 
 	switch c.output {
-	case internal.Text:
+	case flags.Text:
 		os.Stdout.WriteString(v.String())
-	case internal.JSON:
+	case flags.JSON:
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		err := enc.Encode(v)
 		if err != nil {
 			return errors.Wrapf(err, "internal error: failed to encode version")
 		}
-	case internal.JSONCompact:
+	case flags.JSONCompact:
 		enc := json.NewEncoder(os.Stdout)
 		err := enc.Encode(v)
 		if err != nil {

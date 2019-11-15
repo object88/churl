@@ -4,7 +4,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/object88/churl/cmd/internal"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -28,17 +27,17 @@ func CreateConfigFlag(flgs *pflag.FlagSet) {
 }
 
 func CreateOutputFlag(flgs *pflag.FlagSet) {
-	var def internal.Output
-	flgs.String(OutputKey, def.String(), internal.Values())
+	var def Output
+	flgs.String(OutputKey, def.String(), Values())
 	viper.BindPFlag(OutputKey, flgs.Lookup(OutputKey))
 	viper.BindEnv(OutputKey)
 }
 
-func ReadOutputFlag() (internal.Output, error) {
+func ReadOutputFlag() (Output, error) {
 	raw := viper.GetString(OutputKey)
-	var o internal.Output
+	var o Output
 	if err := o.UnmarshalText([]byte(raw)); err != nil {
-		return internal.Unknown, err
+		return Unknown, err
 	}
 	return o, nil
 }
