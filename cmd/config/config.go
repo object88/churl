@@ -12,6 +12,7 @@ type command struct {
 	*common.CommonArgs
 }
 
+// CreateCommand returns the intermediate 'config' subcommand
 func CreateCommand(ca *common.CommonArgs) *cobra.Command {
 	var c *command
 	c = &command{

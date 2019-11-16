@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Output represents the output formatting
 type Output int
 
 const (

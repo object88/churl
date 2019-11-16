@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CreateCommand returns the intermediate 'get' subcommand
 func CreateCommand(ca *common.CommonArgs) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "get",

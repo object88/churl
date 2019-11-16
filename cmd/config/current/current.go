@@ -20,6 +20,7 @@ type command struct {
 	m *manifest.Manifest
 }
 
+// CreateCommand returns the 'current' subcommand
 func CreateCommand(ca *common.CommonArgs) *cobra.Command {
 	var c *command
 	c = &command{

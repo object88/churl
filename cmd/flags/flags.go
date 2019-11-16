@@ -9,11 +9,18 @@ import (
 )
 
 const (
-	ConfigKey  string = "config"
-	OutputKey         = "output"
-	VerboseKey        = "verbose"
+	// ConfigKey is used to specify where a churl config file can be found
+	ConfigKey string = "config"
+
+	// OutputKey determines the output format
+	OutputKey = "output"
+
+	// VerboseKey turns on verbose output to STDERR
+	VerboseKey = "verbose"
 )
 
+// CreateConfigFlag adds the `--config` flag to the flagset, with an
+// OS-specific default location
 func CreateConfigFlag(flgs *pflag.FlagSet) {
 	d, err := os.UserConfigDir()
 	if err != nil {
@@ -26,6 +33,7 @@ func CreateConfigFlag(flgs *pflag.FlagSet) {
 	viper.BindEnv(ConfigKey)
 }
 
+// CreateOutputFlag adds the `--output` flag to the flagset
 func CreateOutputFlag(flgs *pflag.FlagSet) {
 	var def Output
 	flgs.String(OutputKey, def.String(), Values())
@@ -33,6 +41,8 @@ func CreateOutputFlag(flgs *pflag.FlagSet) {
 	viper.BindEnv(OutputKey)
 }
 
+// ReadOutputFlag gets the specified output setting, and verifies that it is a
+// legitimate value
 func ReadOutputFlag() (Output, error) {
 	raw := viper.GetString(OutputKey)
 	var o Output
