@@ -44,6 +44,8 @@ func New() *Manifest {
 	}
 }
 
+// Open creates a Manifest instance from the JSON content from the `r`
+// parameter
 func Open(r io.Reader) (*Manifest, error) {
 	m := &Manifest{}
 
@@ -56,6 +58,10 @@ func Open(r io.Reader) (*Manifest, error) {
 	return m, nil
 }
 
+// OpenFromFile creates a Manifest instance from the contents of the JSON-
+// encoded contents of the file at `manifestFilepath`.  An open reference to
+// the file is kept with the instance, so the caller is responsible for calling
+// `Close`.
 func OpenFromFile(manifestFilepath string) (*Manifest, error) {
 	f, err := os.Open(manifestFilepath)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/jmespath/go-jmespath"
-	ctesting "github.com/object88/churl/cmd/internal/testing"
+	ctesting "github.com/object88/churl/internal/testing"
 )
 
 func Test_Cmd_Version(t *testing.T) {
@@ -20,7 +20,7 @@ func Test_Cmd_Version(t *testing.T) {
 		t.Skipf("Test requires both $TEST_SHA and $TEST_VERSION")
 	}
 
-	out, exitCode := ctesting.Run(t, "version", "--output", "json")
+	out, exitCode := ctesting.RunChurl(t, "version", "--output", "json")
 	if exitCode != 0 {
 		t.Fatalf("Unexpected exit code %d", exitCode)
 	}
@@ -33,7 +33,7 @@ func Test_Cmd_Version(t *testing.T) {
 }
 
 func Test_Cmd_Version_Invalid_Output(t *testing.T) {
-	_, exitCode := ctesting.Run(t, "version", "--output", "foo")
+	_, exitCode := ctesting.RunChurl(t, "version", "--output", "foo")
 	if exitCode == 0 {
 		t.Errorf("Expected non-zero exit code")
 	}

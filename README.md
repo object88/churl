@@ -1,8 +1,12 @@
 # churl
 
-`churl` (**ch**art museum c**url**) is a utility for interacting with a [Helm](https://helm.sh) [chart museum]().
+`churl` (**ch**art museum c**url**) is a utility for interacting with a [Helm](https://helm.sh) [chart museum](https://chartmuseum.com/).  
 
 The default chart museum deployment does not include a kubernetes ingress, meaning that it's only accessible from within the kubernetes cluster, perhaps using it's service address (i.e., http://cm-chartmuseum.chartmuseum:8080/index.yaml).  `churl` will create a kubernetes port-forwarding tunnel from a local machine and issue HTTP requests to retrieve charts and chart archives.
+
+## Helm
+
+The Chart Museum is installed as a helm package, and the version of helm used makes no difference, however, the tests assume the usage of version 3.
 
 ## Limits
 
