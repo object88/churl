@@ -13,7 +13,35 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Run(t *testing.T, args ...string) (string, int) {
+// Runnable is a executable binary
+type Runnable struct {
+	t          *testing.T
+	binaryPath string
+}
+
+// NewRunnable creates a new Runnable and validates that the requestsed binary
+// can be found
+func NewRunnable(t *testing.T, bin string) (*Runnable, bool, error) {
+	binaryPath, err := exec.LookPath(bin)
+	if err != nil {
+		if err == exec.ErrNotFound {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	r := &Runnable{
+		t:          t,
+		binaryPath: binaryPath,
+	}
+
+	return r, true, nil
+}
+
+func (r *Runnable) Run(args ...string) (string, int) {
+	return Run(r.t, r.binaryPath, args...)
+}
+
+func RunChurl(t *testing.T, args ...string) (string, int) {
 	bin := os.Getenv("TEST_BINARY_NAME")
 	if bin == "" {
 		t.Skipf("Environment variable '$TEST_BINARY_NAME' not provided, skipping.")
@@ -23,6 +51,11 @@ func Run(t *testing.T, args ...string) (string, int) {
 		t.Fatalf("Environment variable '$TEST_BINARY_NAME' has value '%s', but could not be found:\n%s", bin, err.Error())
 	}
 
+	return Run(t, binaryPath, args...)
+}
+
+// Run starts a process and waits for it to finish
+func Run(t *testing.T, binaryPath string, args ...string) (string, int) {
 	ctx := context.Background()
 	if true {
 		var cancel context.CancelFunc
@@ -52,7 +85,7 @@ func Run(t *testing.T, args ...string) (string, int) {
 	ch := make(chan error, 1)
 
 	go func() {
-		err = cmd.Start()
+		err := cmd.Start()
 		if err != nil {
 			ch <- errors.Wrapf(err, "Failed to start process")
 			return
