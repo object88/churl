@@ -9,13 +9,12 @@ const knownGoodMuseum = `{
 	"name": "default",
 	"kubeContext": "krobot",
 	"serviceName": "cm-chartmuseum",
-	"port": 8080
+	"port": "8080"
 }
 `
 
 func Test_Manifest_ChartMuseum_Unmarshal(t *testing.T) {
 	im := &intermediateMuseum{}
-	// var im intermediateMuseum
 
 	err := json.Unmarshal([]byte(knownGoodMuseum), &im)
 	if err != nil {

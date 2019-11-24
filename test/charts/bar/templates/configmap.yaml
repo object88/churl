@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.env }}-configmap
+  metadata: {{ .Release.namespace }}
+data:
+  food:
+    - burrito
+    - lasagna
+    - tacos

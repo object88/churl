@@ -11,7 +11,8 @@ import (
 type ChartMuseum struct {
 	KubeContext string
 	ServiceName string
-	Port        uint64
+	Namespace   string
+	Port        string
 }
 
 type intermediateMuseum struct {
@@ -23,6 +24,7 @@ const (
 	nameKey string = "name"
 
 	kubeContextKey string = "kubeContext"
+	namespaceKey          = "namespace"
 	portKey               = "port"
 	serviceNameKey        = "serviceName"
 )
@@ -58,6 +60,8 @@ func (im *intermediateMuseum) UnmarshalJSON(b []byte) error {
 			err = json.Unmarshal(*v, &im.KubeContext)
 		case nameKey:
 			err = json.Unmarshal(*v, &im.name)
+		case namespaceKey:
+			err = json.Unmarshal(*v, &im.Namespace)
 		case portKey:
 			err = json.Unmarshal(*v, &im.Port)
 		case serviceNameKey:
