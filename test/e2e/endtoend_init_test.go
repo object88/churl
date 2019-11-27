@@ -19,11 +19,11 @@ func (wcd *WithChartMuseum) Test_Setup(t *testing.T) {
 		t.Errorf("Init failed, exit code %d", exitcode)
 	}
 
-	// TODO: not implemented; missing subcommand is invoked, but this still
-	// doesn't return a non-zero exit code.  Waiting on an update from
-	// spf13/cobra for a change to this behavior.
-	_, exitcode = wcd.churlBinary.Run("config", "add")
-	if exitcode != 0 {
-		t.Errorf("Init failed, exit code %d", exitcode)
-	}
+	// // TODO: not implemented; missing subcommand is invoked, but this still
+	// // doesn't return a non-zero exit code.  Waiting on an update from
+	// // spf13/cobra for a change to this behavior.
+	// _, exitcode = wcd.churlBinary.Run("config", "add")
+	// if exitcode != 0 {
+	// 	t.Errorf("Init failed, exit code %d", exitcode)
+	// }
 }

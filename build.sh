@@ -22,9 +22,11 @@ check() {
   fi
 }
 
-check jq
 check git
 check go
+check helm
+check jq
+check kubectl
 
 if ! [ ${#MISSING[@]} -eq 0 ]; then
   echo "Missing prerequisites:"

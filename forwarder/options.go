@@ -1,12 +1,17 @@
 package forwarder
 
-import "io"
+import (
+	"io"
+	"time"
+)
 
 type Option func(o *Options) error
 
 type Options struct {
 	err io.Writer
 	out io.Writer
+
+	podTimeout time.Duration
 
 	ready chan struct{}
 }
@@ -33,6 +38,13 @@ func Out(w io.Writer) Option {
 			w = &nilwriter{}
 		}
 		o.out = w
+		return nil
+	}
+}
+
+func PodTimeout(t time.Duration) Option {
+	return func(o *Options) error {
+		o.podTimeout = t
 		return nil
 	}
 }

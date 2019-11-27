@@ -59,7 +59,7 @@ func Run(t *testing.T, binaryPath string, args ...string) (string, int) {
 	ctx := context.Background()
 	if true {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, 5*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 	}
 	cmd := exec.CommandContext(context.Background(), binaryPath, args...)

@@ -12,11 +12,14 @@ import (
 
 const (
 	museumsKey string = "museums"
+	currentKey string = "current"
 )
 
 // Manifest describes the configuration for the churl tool
 type Manifest struct {
 	Museums map[string]*ChartMuseum
+
+	current string
 
 	f *os.File
 }
@@ -76,6 +79,15 @@ func OpenFromFile(manifestFilepath string) (*Manifest, error) {
 	m.f = f
 
 	return m, nil
+}
+
+// Current returns the current chart museum, or nil
+func (m *Manifest) Current() *ChartMuseum {
+	if m == nil || m.current == "" {
+		return nil
+	}
+
+	return m.Museums[m.current]
 }
 
 // Save write the manifest file to disk, if it was opened with `OpenFromFile`
@@ -153,7 +165,9 @@ func (m *Manifest) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	buf.WriteString(`]}`)
+	buf.WriteString(`], "current": "`)
+	buf.WriteString(m.current)
+	buf.WriteString(`"}`)
 
 	return buf.Bytes(), nil
 }
@@ -181,6 +195,20 @@ func (m *Manifest) UnmarshalJSON(b []byte) error {
 
 	for _, v := range data {
 		m.Museums[v.name] = v.ChartMuseum
+	}
+
+	// Read in the "current" key to set the current museum
+	r, ok = objMap[currentKey]
+	if !ok {
+		return errors.Errorf("Must have '%s' key", currentKey)
+	}
+	err = json.Unmarshal(*r, &m.current)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to unmarshal '%s' value into string", currentKey)
+	}
+
+	if _, ok = m.Museums[m.current]; !ok {
+		return errors.Errorf("Manifest JSON contains invalid 'current' museum '%s'", m.current)
 	}
 
 	return nil

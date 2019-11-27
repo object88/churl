@@ -18,9 +18,10 @@ const knownGoodManifest = `{
 			"name": "default",
 			"kubeContext": "krobot",
 			"serviceName": "cm-chartmuseum",
-			"port": 8080
+			"port": "8080"
 		}
-	]
+	],
+	"current": "default"
 }
 `
 
@@ -69,7 +70,7 @@ func Test_Manifest_Save(t *testing.T) {
 	}
 
 	m.Museums["foo"] = &ChartMuseum{
-		Port: 123,
+		Port: "123",
 	}
 	m.Museums["bar"] = &ChartMuseum{
 		KubeContext: "blah",
@@ -130,6 +131,50 @@ func Test_Manifest_Close(t *testing.T) {
 			err := tc.m.Close()
 			if err != nil {
 				t.Errorf("Unexpected error while closing:\n%s", err.Error())
+			}
+		})
+	}
+}
+
+func Test_Manifest_Current(t *testing.T) {
+	r := strings.NewReader(knownGoodManifest)
+
+	m, err := Open(r)
+	if err != nil {
+		t.Fatalf("Failed to open manifest string:\n%s", err.Error())
+	}
+
+	cur := m.Current()
+	if cur == nil {
+		t.Errorf("Current museum is nil")
+	}
+
+}
+
+func Test_Manifest_InvalidCurrent(t *testing.T) {
+	tcs := []struct {
+		name     string
+		manifest string
+	}{
+		{
+			name:     "missing key",
+			manifest: `{"museums": [{"name": "aaa", "kubeContext": "bbb", "serviceName": "ccc","port": 8080}]}`,
+		},
+		{
+			name:     "empty name",
+			manifest: `{"museums": [{"name": "aaa", "kubeContext": "bbb", "serviceName": "ccc","port": 8080}],"current": ""}`,
+		},
+		{
+			name:     "incorrect name",
+			manifest: `{"museums": [{"name": "aaa", "kubeContext": "bbb", "serviceName": "ccc","port": 8080}],"current": "default"}`,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := Open(strings.NewReader(tc.manifest))
+			if err == nil {
+				t.Errorf("Expected error, got none")
 			}
 		})
 	}
