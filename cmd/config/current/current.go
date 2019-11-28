@@ -2,7 +2,6 @@ package current
 
 import (
 	"os"
-	"path"
 
 	"github.com/object88/churl/cmd/common"
 	"github.com/object88/churl/cmd/flags"
@@ -37,17 +36,10 @@ func CreateCommand(ca *common.CommonArgs) *cobra.Command {
 		CommonArgs: ca,
 	}
 
-	d, err := os.UserConfigDir()
-	if err != nil {
-		panic(err)
-	}
-	configFile := path.Join(d, "churl", "config.json")
-
 	flgs := c.Flags()
 
-	flgs.String(flags.ConfigKey, configFile, "Path to configuration file")
-	viper.BindPFlag(flags.ConfigKey, flgs.Lookup(flags.ConfigKey))
-	viper.BindEnv(flags.ConfigKey)
+	// Config flag
+	flags.CreateConfigFlag(flgs)
 
 	return traverse.TraverseRunHooks(&c.Command)
 }
