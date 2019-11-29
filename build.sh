@@ -159,3 +159,7 @@ if [[ $DO_TEST == "true" ]]; then
   time go test ./... -count=1 -tags test_integration
   echo ""
 fi
+
+cp $TEST_BINARY_NAME /usr/local/bin/churl
+$TEST_BINARY_NAME completion bash > /usr/local/etc/bash_completion.d/churl
+$TEST_BINARY_NAME completion zsh > /usr/local/share/zsh/site-functions/_churl

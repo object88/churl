@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/object88/churl/cmd/common"
+	"github.com/object88/churl/cmd/completion"
 	"github.com/object88/churl/cmd/config"
 	"github.com/object88/churl/cmd/get"
 	initcmd "github.com/object88/churl/cmd/init"
@@ -14,11 +15,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+const bashCompletionFunc = `
+__churl_get_outputs()
+{
+	COMPREPLY=( "json", "json-compressed", "text" )
+}
+`
+
 // InitializeCommands sets up the cobra commands
 func InitializeCommands() *cobra.Command {
 	ca, rootCmd := createRootCommand()
 
 	rootCmd.AddCommand(
+		completion.CreateCommand(ca),
 		config.CreateCommand(ca),
 		get.CreateCommand(ca),
 		initcmd.CreateCommand(ca),
@@ -33,8 +42,9 @@ func createRootCommand() (*common.CommonArgs, *cobra.Command) {
 
 	var start time.Time
 	cmd := &cobra.Command{
-		Use:   "churl",
-		Short: "churl allows interopability with a chart museum",
+		Use:                    "churl",
+		Short:                  "churl allows interopability with a chart museum",
+		BashCompletionFunction: bashCompletionFunc,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			start = time.Now()
 			ca.Evaluate()
