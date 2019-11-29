@@ -27,6 +27,7 @@ check go
 check helm
 check jq
 check kubectl
+check zip
 
 if ! [ ${#MISSING[@]} -eq 0 ]; then
   echo "Missing prerequisites:"
@@ -53,6 +54,7 @@ LDFLAGS_IMPORTS="-X github.com/object88/churl.GitCommit=${GIT_COMMIT} -X github.
 cd "$CWD"
 
 # default to mostly true, set env val to override
+DO_PACKAGE=${DO_PACKAGE:-"false"}
 DO_TEST=${DO_TEST:-"true"}
 DO_VERIFY=${DO_VERIFY:-"true"}
 DO_VET=${DO_VET:-"true"}
@@ -76,6 +78,10 @@ while [[ $# -gt 0 ]]; do
         ;;
     --no-vet)
         DO_VET="false"
+        shift
+        ;;
+    --package)
+        DO_PACKAGE="true"
         shift
         ;;
     *)
@@ -146,6 +152,10 @@ for PLATFORM in "${PLATFORMS[@]}"; do
     time go build -o ./bin/$BINARY_NAME -ldflags "-s -w $LDFLAGS_IMPORTS" ./main/main.go
   else
     time go build -o ./bin/$BINARY_NAME -tags "netgo" -ldflags "-extldflags \"-static\" -s -w $LDFLAGS_IMPORTS" ./main/main.go
+  fi
+
+  if [ $DO_PACKAGE == "true" ]; then
+    zip -j ./bin/$BINARY_NAME.zip ./bin/$BINARY_NAME
   fi
   echo ""
 done
