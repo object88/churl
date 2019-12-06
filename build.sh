@@ -54,6 +54,7 @@ LDFLAGS_IMPORTS="-X github.com/object88/churl.GitCommit=${GIT_COMMIT} -X github.
 cd "$CWD"
 
 # default to mostly true, set env val to override
+DO_LOCAL_INSTALL=${DO_LOCAL_INSTALL:-"true"}
 DO_PACKAGE=${DO_PACKAGE:-"false"}
 DO_TEST=${DO_TEST:-"true"}
 DO_VERIFY=${DO_VERIFY:-"true"}
@@ -63,9 +64,14 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     --fast)
-        DO_VET="false"
-        DO_VERIFY="false"
+        DO_LOCAL_INSTALL="false"
         DO_TEST="false"
+        DO_VERIFY="false"
+        DO_VET="false"
+        shift
+        ;;
+    --no-local-install)
+        DO_LOCAL_INSTALL="false"
         shift
         ;;
     --no-test)
@@ -170,6 +176,8 @@ if [[ $DO_TEST == "true" ]]; then
   echo ""
 fi
 
-cp $TEST_BINARY_NAME /usr/local/bin/churl
-$TEST_BINARY_NAME completion bash > /usr/local/etc/bash_completion.d/churl
-$TEST_BINARY_NAME completion zsh > /usr/local/share/zsh/site-functions/_churl
+if [ $DO_LOCAL_INSTALL == "true" ]; then
+  cp $TEST_BINARY_NAME /usr/local/bin/churl
+  $TEST_BINARY_NAME completion bash > /usr/local/etc/bash_completion.d/churl
+  $TEST_BINARY_NAME completion zsh > /usr/local/share/zsh/site-functions/_churl
+fi
