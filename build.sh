@@ -177,7 +177,9 @@ if [[ $DO_TEST == "true" ]]; then
 fi
 
 if [ $DO_LOCAL_INSTALL == "true" ]; then
+  echo "Copying to /usr/local/bin and installing bash/zsh completion"
   cp $TEST_BINARY_NAME /usr/local/bin/churl
   $TEST_BINARY_NAME completion bash > /usr/local/etc/bash_completion.d/churl
   $TEST_BINARY_NAME completion zsh > /usr/local/share/zsh/site-functions/_churl
+  echo ""
 fi
