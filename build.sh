@@ -183,3 +183,5 @@ if [ $DO_LOCAL_INSTALL == "true" ]; then
   $TEST_BINARY_NAME completion zsh > /usr/local/share/zsh/site-functions/_churl
   echo ""
 fi
+
+echo "Done"
