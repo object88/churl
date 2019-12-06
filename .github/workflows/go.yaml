@@ -37,7 +37,6 @@ jobs:
     
     - name: Check event
       run: |
-        echo "$GITHUB_EVENT_PATH"
         cat "$GITHUB_EVENT_PATH"
 
     - name: Upload Release Asset
